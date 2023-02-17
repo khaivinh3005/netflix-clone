@@ -1,3 +1,4 @@
+import { getProducts, Product } from '@stripe/firestore-stripe-payments';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import { useRecoilState } from 'recoil';
@@ -5,8 +6,12 @@ import { modalState } from '../atom/modalAtom';
 import Banner from '../components/Banner';
 import Header from '../components/Header';
 import Modal from '../components/Modal';
+import Plants from '../components/Plants';
 import Row from '../components/Row';
 import useAuth from '../hooks/useAuth';
+import useList from '../hooks/useList';
+import useSubscription from '../hooks/useSubscription';
+import payments from '../lib/stripe';
 import { Movie } from '../typings';
 import requests from '../utils/requests';
 
@@ -19,6 +24,7 @@ interface Props {
   horrorMovies: Movie[];
   romanceMovies: Movie[];
   documentaries: Movie[];
+  products: Product[];
 }
 
 const Home: NextPage<Props> = (props: Props) => {
@@ -31,11 +37,16 @@ const Home: NextPage<Props> = (props: Props) => {
     horrorMovies,
     romanceMovies,
     documentaries,
+    products,
   } = props;
 
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
   const showModal = useRecoilState(modalState);
-  if (loading) return <>Loading</>;
+  const subscription = useSubscription(user);
+  const list: any = useList(user?.uid);
+
+  if (loading || subscription === null) return null;
+  if (!subscription) return <Plants products={products} />;
 
   return (
     <div className='relative h-screen bg-gradient-to-b from-gray-900/10 to-[#010511] lg:h-[140vh]'>
@@ -51,9 +62,7 @@ const Home: NextPage<Props> = (props: Props) => {
           <Row title='Trending Now' movies={trendingNow} />
           <Row title='Top Rated' movies={topRated} />
           <Row title='Action Thrillers' movies={actionMovies} />
-          {/* My List */}
-          {/* {/* {list.length > 0 && <Row title="My List" movies={list} />} */}
-
+          {list.length > 0 && <Row title='My List' movies={list} />}
           <Row title='Comedies' movies={comedyMovies} />
           <Row title='Scary Movies' movies={horrorMovies} />
           <Row title='Romance Movies' movies={romanceMovies} />
@@ -68,12 +77,12 @@ const Home: NextPage<Props> = (props: Props) => {
 export default Home;
 
 export const getServerSideProps = async () => {
-  // const products = await getProducts(payments, {
-  //   includePrices: true,
-  //   activeOnly: true,
-  // })
-  //   .then((res) => res)
-  //   .catch((error) => console.log(error.message))
+  const products = await getProducts(payments, {
+    includePrices: true,
+    activeOnly: true,
+  })
+    .then((res) => res)
+    .catch((error) => console.log(error.message));
 
   const [
     netflixOriginals,
@@ -105,7 +114,7 @@ export const getServerSideProps = async () => {
       horrorMovies: horrorMovies.results,
       romanceMovies: romanceMovies.results,
       documentaries: documentaries.results,
-      // products,
+      products,
     },
   };
 };

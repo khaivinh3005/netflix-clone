@@ -4,6 +4,7 @@ import Image from 'next/image';
 import type { ImageLoaderProps } from 'next/image';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useAuth from '../hooks/useAuth';
+import SignUpComponent from './signUp';
 
 type Props = {};
 type Inputs = {
@@ -14,6 +15,7 @@ type Inputs = {
 function Login({}: Props) {
   const [login, setLogin] = useState(false);
   const { signIn, signUp } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
   const {
     register,
     handleSubmit,
@@ -23,10 +25,10 @@ function Login({}: Props) {
   const onSubmit: SubmitHandler<Inputs> = async ({ email, password }) => {
     if (login) {
       await signIn(email, password);
-    } else {
-      await signUp(email, password);
     }
   };
+
+  if (isSignUp) return <SignUpComponent setIsSignUp={setIsSignUp} />;
 
   return (
     <div className='relative flex h-screen w-screen flex-col md:items-center md:justify-center'>
@@ -51,6 +53,7 @@ function Login({}: Props) {
           objectFit='contain'
         />
       </div>
+
       <form
         className='relative mt-24 space-y-8 rounded bg-black/75 py-10 px-6 md:mt-0 md:max-w-md md:px-14'
         onSubmit={handleSubmit(onSubmit)}
@@ -88,7 +91,10 @@ function Login({}: Props) {
           <button
             className='cursor-pointer text-white hover:underline'
             type='submit'
-            onClick={() => setLogin(false)}
+            onClick={() => {
+              setIsSignUp(true);
+              setLogin(false);
+            }}
           >
             Sign up now
           </button>

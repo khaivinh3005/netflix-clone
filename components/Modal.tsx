@@ -7,22 +7,46 @@ import {
   FaPlus,
   FaVolumeOff,
   FaVolumeUp,
+  FaCheck,
 } from 'react-icons/fa';
-
 import MuiModal from '@mui/material/Modal';
 import { useRecoilState } from 'recoil';
+import toast, { Toaster } from 'react-hot-toast';
+
 import { modalState, movieState } from '../atom/modalAtom';
-import { DocumentData } from 'firebase/firestore';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  DocumentData,
+  onSnapshot,
+  setDoc,
+} from 'firebase/firestore';
 import { Element, Genre, Movie } from '../typings';
+import { db } from '../firebase';
+import useAuth from '../hooks/useAuth';
 
 type Props = {};
 
 const Modal = (props: Props) => {
-  const [showModal, setShowModal] = useRecoilState(modalState);
   const [movie, setMovie] = useRecoilState(movieState);
   const [trailer, setTrailer] = useState('');
-  const [genres, setGenres] = useState<Genre[]>([]);
+  const [showModal, setShowModal] = useRecoilState(modalState);
   const [muted, setMuted] = useState(true);
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [addedToList, setAddedToList] = useState(false);
+  const { user } = useAuth();
+  const [movies, setMovies] = useState<DocumentData[] | Movie[]>([]);
+
+  const toastStyle = {
+    background: 'white',
+    color: 'black',
+    fontWeight: 'bold',
+    fontSize: '16px',
+    padding: '15px',
+    borderRadius: '9999px',
+    maxWidth: '1000px',
+  };
 
   useEffect(() => {
     if (!movie) return;
@@ -34,26 +58,46 @@ const Modal = (props: Props) => {
         }/${movie?.id}?api_key=${
           process.env.NEXT_PUBLIC_API_KEY
         }&language=en-US&append_to_response=videos`
-      )
-        .then((response) => response.json())
-        .catch((err) => console.log(err));
-
+      ).then((response) => response.json());
       if (data?.videos) {
         const index = data.videos.results.findIndex(
           (element: Element) => element.type === 'Trailer'
         );
         setTrailer(data.videos?.results[index]?.key);
       }
-
       if (data?.genres) {
         setGenres(data.genres);
       }
     }
+
     fetchMovie();
   }, [movie]);
 
   const handleClose = () => {
     setShowModal(false);
+    setMovie(null);
+    toast.dismiss();
+  };
+
+  const handleList = async () => {
+    setAddedToList(!addedToList);
+    if (addedToList) {
+      toast(
+        `${movie?.title || movie?.original_name} has been removed from My List`,
+        {
+          duration: 8000,
+          style: toastStyle,
+        }
+      );
+    } else {
+      toast(
+        `${movie?.title || movie?.original_name} has been added to My List.`,
+        {
+          duration: 8000,
+          style: toastStyle,
+        }
+      );
+    }
   };
 
   return (
@@ -63,6 +107,8 @@ const Modal = (props: Props) => {
       className='fixed !top-7 left-0 right-0 z-50 mx-auto w-full max-w-5xl overflow-hidden overflow-y-scroll rounded-md scrollbar-hide'
     >
       <>
+        <Toaster position='bottom-center' />
+
         <button
           className='modalButton absolute right-5 top-5 !z-40 h-7 w-7 border-none rounded-none bg-[#181818] hover:bg-[#181818]'
           onClick={handleClose}
@@ -84,8 +130,12 @@ const Modal = (props: Props) => {
                 <FaPlay className='h-7 w-7 text-black' />
                 Play
               </button>
-              <button className='modalButton'>
-                <FaPlus className='h-7 w-7' />
+              <button className='modalButton' onClick={handleList}>
+                {addedToList ? (
+                  <FaCheck className='h-7 w-7' />
+                ) : (
+                  <FaPlus className='h-7 w-7' />
+                )}
               </button>
               <button className='modalButton'>
                 <FaThumbsUp className='h-6 w-6' />
