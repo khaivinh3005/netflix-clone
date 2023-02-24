@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         router.push('/');
         setLoading(false);
       })
-      .catch((error) => alert(error.message))
+      .catch((error) => alert('Email or Password wrong'))
       .finally(() => setLoading(false));
   };
 
