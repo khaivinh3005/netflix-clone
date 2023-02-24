@@ -70,25 +70,31 @@ const SignUpComponent = ({ setIsSignUp }: Props) => {
         className='w-full md:flex  md:items-center md:justify-center text-center md:text-left  py-10'
         onSubmit={handleSubmit(onSubmit)}
       >
-        <label className='md:w-4/12'>
+        <label className='md:w-4/12 relative'>
           <input
             {...register('email', { required: true })}
             type='email'
             placeholder='Email'
             className='input  rounded-sm'
           />
-          {errors.email && <span>This field is required</span>}
+          {errors.email && (
+            <div className='absolute'>This field is required</div>
+          )}
         </label>
-        <label className='md:w-4/12 md:ml-1 '>
+        <label className='md:w-4/12 md:ml-1 relative'>
           <input
             {...register('password', { required: true })}
             type='password'
             placeholder='Password'
-            className='input  rounded-sm mt-2 md:mt-0'
+            className='input  rounded-sm mt-8 md:mt-0'
           />
-          {errors.password && <span>This field is required</span>}
+          {errors.password && (
+            <div className='absolute'>This field is required</div>
+          )}
         </label>
-        <button className='md:px-0 px-8 py-3  mt-3 md:mt-0  bg-[#E50914] font-semibold md:py-3.5 md:ml-1 md:w-2/12'>
+        <button
+          className={`md:px-0 px-8 py-3  mt-6 md:mt-0  bg-[#E50914] font-semibold md:py-3.5 md:ml-1 md:w-2/12`}
+        >
           Get Started
           <FaAngleRight className='inline ml-1 text-2xl' />
         </button>
